@@ -45,11 +45,13 @@ namespace godot {
 		bool open_buffered(String name, PoolByteArray buffers, int64_t size);
 		void close();
 
-		bool query(String statement);
+		//bool query(String statement);
+		bool query(String query, String params[], int params_types[]);
 		Array fetch_array(String statement);
 		Array fetch_assoc(String statement);
 
 	private:
+		bool bind_parameters(sqlite3_stmt *stmt, String params[], int params_types[]);
 		sqlite3_stmt* prepare(const char* statement);
 		Array fetch_rows(String query, int result_type = RESULT_BOTH);
 		Dictionary parse_row(sqlite3_stmt *stmt, int result_type);

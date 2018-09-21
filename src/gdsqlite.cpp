@@ -1,8 +1,30 @@
 #include "gdsqlite.hpp"
 #include <ProjectSettings.hpp>
 #include <File.hpp>
+#include <cstdlib>
 
 using namespace godot;
+
+/*
+sqlite3_bind_blob
+sqlite3_bind_blob64
+sqlite3_bind_double
+sqlite3_bind_int
+sqlite3_bind_int64
+sqlite3_bind_null
+sqlite3_bind_parameter_count
+sqlite3_bind_parameter_index
+sqlite3_bind_parameter_name
+sqlite3_bind_pointer
+sqlite3_bind_text
+sqlite3_bind_text16
+sqlite3_bind_text64
+sqlite3_bind_value
+sqlite3_bind_zeroblob
+sqlite3_bind_zeroblob64
+*/
+
+enum BindType {DOUBLE, INT, TEXT};
 
 SQLite::SQLite() {
 	db = nullptr;
@@ -110,7 +132,7 @@ sqlite3_stmt* SQLite::prepare(const char* query) {
 	return stmt;
 }
 
-bool SQLite::query(String query) {
+/*bool SQLite::query(String query) {
 	sqlite3_stmt *stmt = prepare(query.utf8().get_data());
 
 	// Failed to prepare the query
@@ -121,6 +143,57 @@ bool SQLite::query(String query) {
 	// Evaluate the sql query
 	sqlite3_step(stmt);
 	sqlite3_finalize(stmt);
+
+	return true;
+}*/
+
+bool SQLite::query(String query, String params[], int params_types[]) {
+	int params_length = sizeof(params) / sizeof(params[0]);
+	int params_types_length = sizeof(params_types) / sizeof(params_types[0]);
+
+	if (params_length != params_types_length) {
+		return false;
+	}
+
+	sqlite3_stmt *stmt = prepare(query.utf8().get_data());
+
+	// Failed to prepare the query
+	if (!stmt) {
+		return false;
+	}
+
+	bind_parameters(stmt, params, params_types);
+
+	// Evaluate the sql query
+	sqlite3_step(stmt);
+	sqlite3_finalize(stmt);
+
+	return true;
+}
+
+bool SQLite::bind_parameters(sqlite3_stmt *stmt, String params[], int params_types[]) {
+	int param_index = 1;
+	int params_length = sizeof(params) / sizeof(params[0]);
+	int params_types_length = sizeof(params_types) / sizeof(params_types[0]);
+
+	for (int i = 0; i < params_length; i++) {
+		switch (params_types[i]) {
+			case DOUBLE:
+				//sqlite3_bind_double(stmt, param_index, std::stod(std::string(params[i].utf8().get_data())));
+				sqlite3_bind_double(stmt, param_index, std::atof(params[i].utf8().get_data()));
+				break;
+			case INT:
+				sqlite3_bind_int(stmt, param_index, std::atoi(params[i].utf8().get_data()));
+				break;
+			case TEXT:
+				//sqlite3_bind_text(stmt*, param_index, params[i].utf8().get_data(), int, void(*)(void*));
+				break;
+			default:
+				return false;
+		}
+
+		param_index++;
+	}
 
 	return true;
 }

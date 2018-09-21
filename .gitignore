@@ -55,3 +55,5 @@ vsproj/Release/
 vsproj/x64/
 vsproj/x86/
 vsproj/gdsqlite.vcxproj.*
+vsproj/gdsqlite.VC.db
+vsproj/gdsqlite.VC.VC.opendb
