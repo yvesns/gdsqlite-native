@@ -1,11 +1,10 @@
 #include "gdsqlite.hpp"
 #include <ProjectSettings.hpp>
 #include <File.hpp>
-#include <cstdlib>
 
 using namespace godot;
 
-enum BindType {DOUBLE, INT, TEXT};
+enum BindType { DOUBLE, INT, TEXT };
 
 SQLite::SQLite() {
 	db = nullptr;
@@ -113,19 +112,76 @@ sqlite3_stmt* SQLite::prepare(const char* query) {
 	return stmt;
 }
 
-bool SQLite::bind_int(sqlite3_stmt* stmt, int param_index, int value) {
-	if (sqlite3_bind_int(stmt, param_index, value)) {
-		return true;
+bool SQLite::bind_params(sqlite3_stmt *stmt, Array params, Array types) {
+	if (params.size() != types.size()) {
+		return false;
 	}
 
-	return false;
+	int param_index = 1;
+
+	while (!types.empty()) {
+		if (types.front().get_type() != GODOT_VARIANT_TYPE_INT) {
+			return false;
+		}
+
+		int type = types.pop_front();
+
+		if (type == DOUBLE) {
+			if (params.front().get_type() != GODOT_VARIANT_TYPE_REAL) {
+				return false;
+			}
+
+			sqlite3_bind_double(stmt, param_index, params.pop_front());
+		}
+		else if (type == INT) {
+			if (params.front().get_type() != GODOT_VARIANT_TYPE_INT) {
+				return false;
+			}
+
+			sqlite3_bind_int(stmt, param_index, params.pop_front());
+		}
+		else if (type == TEXT) {
+			if (params.front().get_type() != GODOT_VARIANT_TYPE_STRING) {
+				return false;
+			}
+
+			String text = params.pop_front();
+			sqlite3_bind_text(stmt, param_index, text.utf8().get_data(), -1, SQLITE_TRANSIENT);
+		}
+		else {
+			return false;
+		}
+
+		param_index++;
+	}
+
+	return true;
 }
 
-bool SQLite::query(String query) {
+bool SQLite::simple_query(String query) {
 	sqlite3_stmt *stmt = prepare(query.utf8().get_data());
 
 	// Failed to prepare the query
 	if (!stmt) {
+		return false;
+	}
+
+	// Evaluate the sql query
+	sqlite3_step(stmt);
+	sqlite3_finalize(stmt);
+
+	return true;
+}
+
+bool SQLite::query(String query, Array params, Array types) {
+	sqlite3_stmt *stmt = prepare(query.utf8().get_data());
+
+	// Failed to prepare the query
+	if (!stmt) {
+		return false;
+	}
+
+	if(!bind_params(stmt, params, types)) {
 		return false;
 	}
 
@@ -228,6 +284,7 @@ void SQLite::_register_methods() {
 	// Method list
 	register_method("open", &SQLite::open);
 	register_method("open_buffered", &SQLite::open_buffered);
+	register_method("simple_query", &SQLite::simple_query);
 	register_method("query", &SQLite::query);
 	register_method("close", &SQLite::close);
 	register_method("fetch_array", &SQLite::fetch_array);
