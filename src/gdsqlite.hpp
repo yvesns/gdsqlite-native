@@ -44,7 +44,6 @@ namespace godot {
 		bool open(String path);
 		bool open_buffered(String name, PoolByteArray buffers, int64_t size);
 		void close();
-
 		bool simple_query(String query);
 		bool query(String query, Array params, Array types);
 		Array fetch_array(String statement);
