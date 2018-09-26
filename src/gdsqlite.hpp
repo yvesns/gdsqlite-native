@@ -15,8 +15,8 @@
 #endif
 
 namespace godot {
-	class SQLite : public Reference {
-		GODOT_CLASS(SQLite, Reference)
+	class SQLite : public godot::GodotScript<Reference> {
+		GODOT_CLASS(SQLite)
 
 	private:
 		// sqlite handler

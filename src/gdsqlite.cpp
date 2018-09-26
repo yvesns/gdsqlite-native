@@ -17,7 +17,7 @@ bool SQLite::open(String path) {
 		return false;
 	
 	// Convert to global path
-	String real_path = ProjectSettings::get_singleton()->globalize_path(path.strip_edges());
+	String real_path = ProjectSettings::globalize_path(path.strip_edges());
 
 	// Open the database
 	int result = sqlite3_open(real_path.utf8().get_data(), &db);
