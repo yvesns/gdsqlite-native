@@ -49,6 +49,7 @@ demo/lib/gdsqlite/*.lib
 lib/*.lib
 
 # VS
+vsproj
 vsproj/.vs/
 vsproj/Debug/
 vsproj/Release/
@@ -57,3 +58,5 @@ vsproj/x86/
 vsproj/gdsqlite.vcxproj.*
 vsproj/gdsqlite.VC.db
 vsproj/gdsqlite.VC.VC.opendb
+*.vcxproj
+demo/lib/gdsqlite/gdsqlite.64.dll
