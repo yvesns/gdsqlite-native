@@ -60,3 +60,6 @@ vsproj/gdsqlite.VC.db
 vsproj/gdsqlite.VC.VC.opendb
 *.vcxproj
 demo/lib/gdsqlite/gdsqlite.64.dll
+*.dll
+vsproj/gdsqlite.vcxproj
+demo/lib/gdsqlite/gdsqlite.64.dll

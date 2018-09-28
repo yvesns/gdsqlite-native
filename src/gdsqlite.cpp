@@ -114,6 +114,7 @@ sqlite3_stmt* SQLite::prepare(const char* query) {
 
 bool SQLite::bind_params(sqlite3_stmt *stmt, Array params, Array types) {
 	if (params.size() != types.size()) {
+		Godot::print("Binding failed: param and type arrays size mismatch.");
 		return false;
 	}
 
@@ -121,6 +122,7 @@ bool SQLite::bind_params(sqlite3_stmt *stmt, Array params, Array types) {
 
 	while (!types.empty()) {
 		if (types.front().get_type() != GODOT_VARIANT_TYPE_INT) {
+			Godot::print("Binding failed: bad type.");
 			return false;
 		}
 
@@ -192,19 +194,23 @@ bool SQLite::query(String query, Array params, Array types) {
 	return true;
 }
 
-Array SQLite::fetch_rows(String statement, int result_type) {
-	Array result;
-
+sqlite3_stmt* SQLite::fetch_prepare(String statement) {
 	// Empty statement
 	if (!statement.strip_edges().length()) {
-		return result;
+		return 0;
 	}
 
 	// Cannot prepare query
 	sqlite3_stmt *stmt = prepare(statement.strip_edges().utf8().get_data());
 	if (!stmt) {
-		return result;
+		return 0;
 	}
+
+	return stmt;
+}
+
+Array SQLite::fetch_rows(sqlite3_stmt* stmt, int result_type) {
+	Array result;
 
 	// Fetch rows
 	while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -267,12 +273,52 @@ Dictionary SQLite::parse_row(sqlite3_stmt *stmt, int result_type) {
 	return result;
 }
 
-Array SQLite::fetch_array(String query) {
-	return fetch_rows(query, RESULT_BOTH);
+Array SQLite::simple_fetch_array(String query) {
+	sqlite3_stmt* stmt = fetch_prepare(query);
+
+	if (!stmt) { 
+		return Array(); 
+	}
+
+	return fetch_rows(stmt, RESULT_BOTH);
 }
 
-Array SQLite::fetch_assoc(String query) {
-	return fetch_rows(query, RESULT_ASSOC);
+Array SQLite::simple_fetch_assoc(String query) {
+	sqlite3_stmt* stmt = fetch_prepare(query);
+
+	if (!stmt) {
+		return Array();
+	}
+
+	return fetch_rows(stmt, RESULT_ASSOC);
+}
+
+Array SQLite::fetch_array(String query, Array params, Array types) {
+	sqlite3_stmt* stmt = fetch_prepare(query);
+
+	if (!stmt) {
+		return Array();
+	}
+
+	if (bind_params(stmt, params, types)) {
+		return Array();
+	}
+
+	return fetch_rows(stmt, RESULT_BOTH);
+}
+
+Array SQLite::fetch_assoc(String query, Array params, Array types) {
+	sqlite3_stmt* stmt = fetch_prepare(query);
+
+	if (!stmt) {
+		return Array();
+	}
+
+	if (bind_params(stmt, params, types)) {
+		return Array();
+	}
+
+	return fetch_rows(stmt, RESULT_ASSOC);
 }
 
 SQLite::~SQLite() {
@@ -287,6 +333,8 @@ void SQLite::_register_methods() {
 	register_method("simple_query", &SQLite::simple_query);
 	register_method("query", &SQLite::query);
 	register_method("close", &SQLite::close);
+	register_method("simple_fetch_array", &SQLite::simple_fetch_array);
+	register_method("simple_fetch_assoc", &SQLite::simple_fetch_assoc);
 	register_method("fetch_array", &SQLite::fetch_array);
 	register_method("fetch_assoc", &SQLite::fetch_assoc);
 }

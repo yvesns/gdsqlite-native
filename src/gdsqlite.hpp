@@ -46,15 +46,19 @@ namespace godot {
 		void close();
 		bool simple_query(String query);
 		bool query(String query, Array params, Array types);
-		Array fetch_array(String statement);
-		Array fetch_assoc(String statement);
+		Array simple_fetch_array(String statement);
+		Array simple_fetch_assoc(String statement);
+		Array fetch_assoc(String query, Array params, Array types);
+		Array fetch_array(String query, Array params, Array types);
 
 	private:
+		sqlite3_stmt* fetch_prepare(String statement);
 		sqlite3_stmt* prepare(const char* statement);
 		bool bind_params(sqlite3_stmt *stmt, Array params, Array types);
-		Array fetch_rows(String query, int result_type = RESULT_BOTH);
+		Array fetch_rows(sqlite3_stmt* query, int result_type = RESULT_BOTH);
 		Dictionary parse_row(sqlite3_stmt *stmt, int result_type);
-		sqlite3* get_handler() { return (memory_read ? p_db.handle : db); }
+		sqlite3* get_handler() { return (memory_read ? p_db.handle : db); 
+		}
 	};
 }
 #endif
