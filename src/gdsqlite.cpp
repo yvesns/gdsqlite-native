@@ -99,6 +99,8 @@ sqlite3_stmt* SQLite::prepare(const char* query) {
 		return nullptr;
 	}
 
+	Godot::print(query);
+
 	// Prepare the statement
 	sqlite3_stmt *stmt;
 	int result = sqlite3_prepare_v2(dbs, query, -1, &stmt, nullptr);
@@ -130,6 +132,7 @@ bool SQLite::bind_params(sqlite3_stmt *stmt, Array params, Array types) {
 
 		if (type == DOUBLE) {
 			if (params.front().get_type() != GODOT_VARIANT_TYPE_REAL) {
+				Godot::print("Binding failed: type mismatch.");
 				return false;
 			}
 
@@ -137,6 +140,7 @@ bool SQLite::bind_params(sqlite3_stmt *stmt, Array params, Array types) {
 		}
 		else if (type == INT) {
 			if (params.front().get_type() != GODOT_VARIANT_TYPE_INT) {
+				Godot::print("Binding failed: type mismatch.");
 				return false;
 			}
 
@@ -144,6 +148,7 @@ bool SQLite::bind_params(sqlite3_stmt *stmt, Array params, Array types) {
 		}
 		else if (type == TEXT) {
 			if (params.front().get_type() != GODOT_VARIANT_TYPE_STRING) {
+				Godot::print("Binding failed: type mismatch.");
 				return false;
 			}
 
@@ -151,6 +156,7 @@ bool SQLite::bind_params(sqlite3_stmt *stmt, Array params, Array types) {
 			sqlite3_bind_text(stmt, param_index, text.utf8().get_data(), -1, SQLITE_TRANSIENT);
 		}
 		else {
+			Godot::print("Binding failed: invalid type.");
 			return false;
 		}
 
@@ -297,10 +303,12 @@ Array SQLite::fetch_array(String query, Array params, Array types) {
 	sqlite3_stmt* stmt = fetch_prepare(query);
 
 	if (!stmt) {
+		Godot::print("Fetch prepare failed.");
 		return Array();
 	}
 
-	if (bind_params(stmt, params, types)) {
+	if (!bind_params(stmt, params, types)) {
+		Godot::print("Fetch bind failed.");
 		return Array();
 	}
 
@@ -311,10 +319,12 @@ Array SQLite::fetch_assoc(String query, Array params, Array types) {
 	sqlite3_stmt* stmt = fetch_prepare(query);
 
 	if (!stmt) {
+		Godot::print("Fetch prepare failed.");
 		return Array();
 	}
 
-	if (bind_params(stmt, params, types)) {
+	if (!bind_params(stmt, params, types)) {
+		Godot::print("Fetch bind failed.");
 		return Array();
 	}
 
